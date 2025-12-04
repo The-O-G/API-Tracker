@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Processor Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+        }
+
+        .btn-run:hover {
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .message-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .url-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .url-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .url-item.inactive {
+            opacity: 0.6;
+            border-left-color: #ccc;
+        }
+
+        .url-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 15px;
+            font-size: 14px;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .result-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <header>
+        <h1>URL Processor Manager</h1>
+        <p class="subtitle">Manage and process your URLs with custom filters</p>
+    </header>
+
+    <div id="message-container"></div>
+
+    <!-- API KEY SECTION -->
+    <div class="card">
+        <h2>API Authentication</h2>
+        <form id="api-key-form">
+            <div class="form-group">
+                <label for="api_key">API Key *</label>
+                <input type="password" id="api_key" placeholder="Enter API key">
+            </div>
+            <button type="submit">Save API Key</button>
+        </form>
+    </div>
+
+    <!-- Add URL -->
+    <div class="card">
+        <h2>Add New URL</h2>
+        <form id="create-form">
+            <div class="form-group">
+                <label for="name">Name *</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="url">URL *</label>
+                <input type="url" id="url" required>
+            </div>
+
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="is_active" checked> Active</label>
+                <label><input type="checkbox" id="has_filter"> Has Filter</label>
+            </div>
+
+            <div id="filter-group" style="display: none;">
+                <label for="filter_value">Filter Function</label>
+                <textarea id="filter_value" placeholder="def filter(response_list):&#10;    return response_list"></textarea>
+            </div>
+
+            <button type="submit">Create URL</button>
+        </form>
+    </div>
+
+    <!-- Run -->
+    <div class="card">
+        <h2>Process URLs</h2>
+        <button class="btn-run" onclick="runUrls()">Process All Active URLs</button>
+        <div id="results-container"></div>
+    </div>
+
+    <!-- URL List -->
+    <div class="card">
+        <h2>URL List</h2>
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading URLs...</p>
+        </div>
+        <div id="url-list"></div>
+    </div>
+
+</div>
+
+
+<!-- ======================= -->
+<!-- FULL JAVASCRIPT SECTION -->
+<!-- ======================= -->
+
+<script>
+/* ---------------- API KEY ---------------- */
+
+function getApiKey() {
+    return localStorage.getItem("api_key") || "";
+}
+
+document.getElementById("api-key-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = document.getElementById("api_key").value;
+
+    if (!key.trim()) return alert("API key cannot be empty.");
+
+    localStorage.setItem("api_key", key);
+    showMessage("API key saved!", "success");
+});
+
+// Pre-fill saved key
+document.getElementById("api_key").value = getApiKey();
+
+
+/* ---------------- Messages ---------------- */
+function showMessage(message, type) {
+    const container = document.getElementById('message-container');
+    const div = document.createElement('div');
+    div.className = `message message-${type}`;
+    div.textContent = message;
+    container.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+}
+
+
+/* ---------------- Toggle filter box ---------------- */
+document.getElementById('has_filter').addEventListener('change', function () {
+    document.getElementById('filter-group').style.display =
+        this.checked ? 'block' : 'none';
+});
+
+
+/* ---------------- Load URLs ---------------- */
+async function loadUrls() {
+    const loading = document.getElementById('loading');
+    const urlList = document.getElementById('url-list');
+
+    loading.style.display = 'block';
+    urlList.innerHTML = '';
+
+    try {
+        const res = await fetch("/api/urls", {
+            headers: { "X-API-KEY": getApiKey() }
+        });
+
+        const data = await res.json();
+        loading.style.display = 'none';
+
+        if (!data.urls.length) {
+            urlList.textContent = "No URLs saved yet.";
+            return;
+        }
+
+        data.urls.forEach(item => {
+            const div = document.createElement("div");
+            div.className = `url-item ${item.is_active ? "" : "inactive"}`;
+
+            div.innerHTML = `
+                <strong>${item.name}</strong> (ID: ${item.id})<br>
+                <a href="${item.url}" target="_blank">${item.url}</a><br>
+                Status: ${item.is_active ? "Active" : "Inactive"}<br>
+                <button class='btn-small' onclick='toggleActive(${item.id}, ${!item.is_active})'>
+                    ${item.is_active ? "Deactivate" : "Activate"}
+                </button>
+                <button class='btn-small btn-delete' onclick='deleteUrl(${item.id})'>Delete</button>
+            `;
+
+            urlList.appendChild(div);
+        });
+
+    } catch (err) {
+        loading.style.display = 'none';
+        showMessage("Error loading URLs", "error");
+    }
+}
+
+
+/* ---------------- Create URL ---------------- */
+document.getElementById("create-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+        name: name.value,
+        url: url.value,
+        is_active: is_active.checked,
+        has_filter: has_filter.checked,
+        filter_value: has_filter.checked ? filter_value.value : null
+    };
+
+    const res = await fetch("/api/urls", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-KEY": getApiKey()
+        },
+        body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+
+    if (res.ok) {
+        showMessage("URL created!", "success");
+        e.target.reset();
+        document.getElementById('filter-group').style.display = 'none';
+        loadUrls();
+    } else {
+        showMessage(json.error, "error");
+    }
+});
+
+
+/* ---------------- Toggle Active ---------------- */
+async function toggleActive(id, state) {
+    const res = await fetch(`/api/urls/${id}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-KEY": getApiKey()
+        },
+        body: JSON.stringify({ is_active: state })
+    });
+
+    if (res.ok) {
+        showMessage("Status updated!", "success");
+        loadUrls();
+    } else {
+        showMessage("Failed to update.", "error");
+    }
+}
+
+
+/* ---------------- Delete URL ---------------- */
+async function deleteUrl(id) {
+    if (!confirm("Delete this URL?")) return;
+
+    const res = await fetch(`/api/urls/${id}`, {
+        method: "DELETE",
+        headers: { "X-API-KEY": getApiKey() }
+    });
+
+    if (res.ok) {
+        showMessage("URL deleted", "success");
+        loadUrls();
+    } else {
+        showMessage("Failed to delete", "error");
+    }
+}
+
+
+/* ---------------- Run URLs ---------------- */
+async function runUrls() {
+    const results = document.getElementById("results-container");
+    results.innerHTML = `<div class="spinner"></div>`;
+
+    const res = await fetch("/api/urls/run", {
+        method: "POST",
+        headers: { "X-API-KEY": getApiKey() }
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+        showMessage(json.error, "error");
+        results.innerHTML = "";
+        return;
+    }
+
+    showMessage("Processing completed", "success");
+
+    // Build HTML output
+    let html = `<h3>Processed: ${json.processed_count} URLs</h3>`;
+
+    json.results.forEach((row, index) => {
+        const firstFive = row.slice(0, 5);
+        html += `
+            <h4>Row ${index + 1}</h4>
+            <pre>${JSON.stringify(firstFive, null, 2)}</pre>
+        `;
+    });
+
+    results.innerHTML = html;
+}
+
+
+
+/* ---------------- Init ---------------- */
+loadUrls();
+</script>
+
+</body>
+</html>
