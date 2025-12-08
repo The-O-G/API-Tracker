@@ -255,4 +255,10 @@ def internal_error(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False,          # turn off debugger
+        use_reloader=False,   # prevent multiple process spawn
+        use_debugger=False    # prevents /dev/shm issue
+    )
